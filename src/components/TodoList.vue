@@ -29,15 +29,37 @@
           <ion-label position="stacked">ตำแหน่ง (Location)</ion-label>
           <ion-input :value="locationText" readonly placeholder="กดเพื่อบันทึกตำแหน่ง"></ion-input>
         </ion-item>
+        <ion-item>
+          <ion-label position="stacked">อัปโหลดรูปภาพ (ไม่บังคับ)</ion-label>
+          <input type="file" accept="image/*" @change="onFileChange" />
+        </ion-item>
+        <ion-item v-if="imagePreview">
+          <ion-label position="stacked">Preview</ion-label>
+          <img :src="imagePreview" alt="Preview" style="max-width:100%;max-height:200px;" />
+        </ion-item>
+        <ion-item v-if="imageUrl">
+          <ion-label position="stacked">Image URL</ion-label>
+          <a :href="imageUrl" target="_blank">{{ imageUrl }}</a>
+          <img :src="imageUrl" alt="Uploaded" style="max-width:100%;max-height:200px;" />
+        </ion-item>
         <ion-button expand="block" type="submit" class="ion-margin-top">บันทึก</ion-button>
       </form>
       <ion-list class="ion-margin-top">
         <ion-item v-for="(todo, idx) in todos" :key="idx">
           <ion-label>
-            <h2>{{ todo.title }}</h2>
-            <p>{{ todo.content }}</p>
-            <p v-if="todo.dueDate">กำหนดเสร็จ: {{ formatDate(todo.dueDate) }}</p>
-            <p v-if="todo.location">ตำแหน่ง: {{ todo.location.lat }}, {{ todo.location.lng }}</p>
+            <div style="display: flex; align-items: flex-start;">
+              <div v-if="todo.imageUrl" style="flex: 0 0 110px; margin-right: 16px;">
+                <a :href="todo.imageUrl" target="_blank">
+                  <img :src="todo.imageUrl" alt="รูปภาพ" style="max-width:100px;max-height:100px;vertical-align:middle;" />
+                </a>
+              </div>
+              <div style="flex: 1;">
+                <h2>{{ todo.title }}</h2>
+                <p>{{ todo.content }}</p>
+                <p v-if="todo.dueDate">กำหนดเสร็จ: {{ formatDate(todo.dueDate) }}</p>
+                <p v-if="todo.location">ตำแหน่ง: {{ todo.location.lat }}, {{ todo.location.lng }}</p>
+              </div>
+            </div>
           </ion-label>
         </ion-item>
       </ion-list>
@@ -56,7 +78,10 @@ const dueDate = ref('');
 const location = ref<{ lat: number; lng: number } | null>(null);
 const locationText = ref('');
 const showDatePicker = ref(false);
-const todos = ref<{ title: string; content: string; dueDate?: string; location?: { lat: number; lng: number } }[]>([]);
+const todos = ref<{ title: string; content: string; dueDate?: string; location?: { lat: number; lng: number }; imageUrl?: string }[]>([]);
+const imageFile = ref<File|null>(null);
+const imagePreview = ref<string>('');
+const imageUrl = ref<string>('');
 
 const STORAGE_KEY = 'my_todos';
 
@@ -77,15 +102,58 @@ async function getLocation() {
   }
 }
 
-function addTodo() {
+function onFileChange(e: Event) {
+  const files = (e.target as HTMLInputElement).files;
+  if (files && files[0]) {
+    imageFile.value = files[0];
+    imagePreview.value = URL.createObjectURL(files[0]);
+  } else {
+    imageFile.value = null;
+    imagePreview.value = '';
+  }
+}
+
+async function uploadImage(): Promise<string> {
+  if (!imageFile.value) return '';
+  const formdata = new FormData();
+  formdata.append('file', imageFile.value, imageFile.value.name);
+  try {
+    const response = await fetch('https://capa.kimhun55.com/upload', {
+      method: 'POST',
+      body: formdata,
+      redirect: 'follow',
+    });
+    const result = await response.json();
+    // ใช้ path จาก response
+    if (!result.path) {
+      alert('Upload ไม่สำเร็จ: ไม่พบ path ใน response');
+      return '';
+    }
+    return result.path;
+  } catch (error) {
+    console.error(error);
+    alert('เกิดข้อผิดพลาดขณะอัปโหลดรูปภาพ: ' + error);
+    return '';
+  }
+}
+
+async function addTodo() {
   if (!title.value || !content.value) return;
-  todos.value.push({ title: title.value, content: content.value, dueDate: dueDate.value, location: location.value });
+  let url = '';
+  if (imageFile.value) {
+    url = await uploadImage();
+    imageUrl.value = url;
+  }
+  todos.value.push({ title: title.value, content: content.value, dueDate: dueDate.value, location: location.value ?? undefined, imageUrl: url });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos.value));
   title.value = '';
   content.value = '';
   dueDate.value = '';
   location.value = null;
   locationText.value = '';
+  imageFile.value = null;
+  imagePreview.value = '';
+  imageUrl.value = '';
 }
 
 function formatDate(dateStr: string) {
