@@ -25,6 +25,10 @@
             <ion-button expand="block" @click="showDatePicker = false">ตกลง</ion-button>
           </ion-content>
         </ion-modal>
+        <ion-item @click="getLocation" button>
+          <ion-label position="stacked">ตำแหน่ง (Location)</ion-label>
+          <ion-input :value="locationText" readonly placeholder="กดเพื่อบันทึกตำแหน่ง"></ion-input>
+        </ion-item>
         <ion-button expand="block" type="submit" class="ion-margin-top">บันทึก</ion-button>
       </form>
       <ion-list class="ion-margin-top">
@@ -33,6 +37,7 @@
             <h2>{{ todo.title }}</h2>
             <p>{{ todo.content }}</p>
             <p v-if="todo.dueDate">กำหนดเสร็จ: {{ formatDate(todo.dueDate) }}</p>
+            <p v-if="todo.location">ตำแหน่ง: {{ todo.location.lat }}, {{ todo.location.lng }}</p>
           </ion-label>
         </ion-item>
       </ion-list>
@@ -43,12 +48,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { IonPage, IonContent, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonList, IonModal, IonDatetime } from '@ionic/vue';
+import { Geolocation } from '@capacitor/geolocation';
 
 const title = ref('');
 const content = ref('');
 const dueDate = ref('');
+const location = ref<{ lat: number; lng: number } | null>(null);
+const locationText = ref('');
 const showDatePicker = ref(false);
-const todos = ref<{ title: string; content: string; dueDate?: string }[]>([]);
+const todos = ref<{ title: string; content: string; dueDate?: string; location?: { lat: number; lng: number } }[]>([]);
 
 const STORAGE_KEY = 'my_todos';
 
@@ -59,13 +67,25 @@ onMounted(() => {
   }
 });
 
+async function getLocation() {
+  try {
+    const pos = await Geolocation.getCurrentPosition();
+    location.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    locationText.value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+  } catch (e) {
+    locationText.value = 'ไม่สามารถดึงตำแหน่งได้';
+  }
+}
+
 function addTodo() {
   if (!title.value || !content.value) return;
-  todos.value.push({ title: title.value, content: content.value, dueDate: dueDate.value });
+  todos.value.push({ title: title.value, content: content.value, dueDate: dueDate.value, location: location.value });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos.value));
   title.value = '';
   content.value = '';
   dueDate.value = '';
+  location.value = null;
+  locationText.value = '';
 }
 
 function formatDate(dateStr: string) {
