@@ -1,6 +1,6 @@
 <template>
   <ion-list>
-    <ion-item v-for="item in items" :key="item.title">
+    <ion-item v-for="item in items" :key="item.id">
       <ion-label>
         <div style="display: flex; align-items: flex-start;">
           <img :src="item.image" alt="demo" style="max-width:100px;max-height:100px;margin-right:16px;" />
@@ -12,6 +12,9 @@
       </ion-label>
     </ion-item>
   </ion-list>
+  <ion-refresher slot="fixed" @ionRefresh="doRefresh">
+    <ion-refresher-content pulling-text="ดึงเพื่อรีเฟรช..." refreshing-spinner="circles" refreshing-text="กำลังโหลดข้อมูล..." />
+  </ion-refresher>
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button @click="showForm = true" color="primary">
       <ion-icon name="add"></ion-icon>
@@ -42,23 +45,23 @@
       </form>
     </ion-content>
   </ion-modal>
+  <ion-loading :is-open="loading" message="กำลังโหลดข้อมูล..." />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, IonModal, IonContent, IonInput, IonTextarea, IonButton } from '@ionic/vue';
+import { IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, IonModal, IonContent, IonInput, IonTextarea, IonButton, IonRefresher, IonRefresherContent, IonLoading } from '@ionic/vue';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-const items = ref([
-  { title: 'หัวเรื่อง Demo', content: 'เนื้อหา demo สำหรับ writer page', image: 'https://placekitten.com/120/120' }
-]);
+const items = ref([]);
 const showForm = ref(false);
 const formTitle = ref('');
 const formContent = ref('');
 const imageFile = ref<File|null>(null);
 const imagePreview = ref<string>('');
 const fileInput = ref<HTMLInputElement|null>(null);
+const loading = ref(false);
 
 function isMobileApp() {
   return Capacitor.isNativePlatform();
@@ -127,7 +130,7 @@ async function submitForm() {
       redirect: 'follow'
     });
     const result = await response.text();
-    alert('บันทึกสำเร็จ: ' + result);
+    alert('บันทึกสำเร็จ: ');
     // เพิ่ม demo item
     items.value.push({ title: formTitle.value, content: formContent.value, image: imagePreview.value || 'https://placekitten.com/120/120' });
     showForm.value = false;
@@ -143,13 +146,13 @@ async function submitForm() {
 onMounted(loadData);
 
 async function loadData() {
+  loading.value = true;
   try {
     const response = await fetch('http://capa.kimhun55.com/get', {
       method: 'GET',
       redirect: 'follow'
     });
     const result = await response.json();
-    // result = { status: true, data: [...] }
     if (result.status && Array.isArray(result.data)) {
       items.value = result.data;
     } else {
@@ -158,6 +161,16 @@ async function loadData() {
   } catch (error) {
     alert('เกิดข้อผิดพลาดขณะโหลดข้อมูล: ' + error);
   }
+  loading.value = false;
+}
+
+async function doRefresh(event: any) {
+  loading.value = true;
+  setTimeout(async () => {
+    await loadData();
+    loading.value = false;
+    event.target.complete();
+  }, 2000);
 }
 </script>
 
