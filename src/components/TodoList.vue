@@ -30,8 +30,10 @@
           <ion-input :value="locationText" readonly placeholder="กดเพื่อบันทึกตำแหน่ง"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">อัปโหลดรูปภาพ (ไม่บังคับ)</ion-label>
-          <input type="file" accept="image/*" @change="onFileChange" />
+          <ion-label position="stacked">อัปโหลดรูปภาพ (กล้องหรือไฟล์)</ion-label>
+
+            <ion-button v-if="isMobileApp()" expand="block" @click="handleSelectImage">เลือกภาพจากกล้อง/แกลเลอรี่</ion-button>
+          <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" style="margin-top:8px;" />
         </ion-item>
         <ion-item v-if="imagePreview">
           <ion-label position="stacked">Preview</ion-label>
@@ -71,6 +73,8 @@
 import { ref, onMounted } from 'vue';
 import { IonPage, IonContent, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonList, IonModal, IonDatetime } from '@ionic/vue';
 import { Geolocation } from '@capacitor/geolocation';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 
 const title = ref('');
 const content = ref('');
@@ -82,6 +86,7 @@ const todos = ref<{ title: string; content: string; dueDate?: string; location?:
 const imageFile = ref<File|null>(null);
 const imagePreview = ref<string>('');
 const imageUrl = ref<string>('');
+const fileInput = ref<HTMLInputElement|null>(null);
 
 const STORAGE_KEY = 'my_todos';
 
@@ -110,6 +115,33 @@ function onFileChange(e: Event) {
   } else {
     imageFile.value = null;
     imagePreview.value = '';
+  }
+}
+
+async function selectImage() {
+  try {
+    const photo = await Camera.getPhoto({
+      quality: 80,
+      allowEditing: false,
+      resultType: CameraResultType.DataUrl,
+      source: CameraSource.Prompt // ให้ผู้ใช้เลือกกล้องหรือไฟล์
+    });
+    imagePreview.value = photo.dataUrl || '';
+    // แปลง dataUrl เป็นไฟล์เพื่อ upload
+    if (photo.dataUrl) {
+      const arr = photo.dataUrl.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      imageFile.value = new File([u8arr], 'photo.jpg', { type: mime });
+    }
+  } catch (e) {
+    alert('ไม่สามารถเลือกภาพได้: ' + e);
   }
 }
 
@@ -160,6 +192,18 @@ function formatDate(dateStr: string) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString();
+}
+
+function isMobileApp() {
+  return Capacitor.isNativePlatform();
+}
+
+async function handleSelectImage() {
+  if (isMobileApp()) {
+    await selectImage();
+  } else {
+    fileInput.value?.click();
+  }
 }
 </script>
 
