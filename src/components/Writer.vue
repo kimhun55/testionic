@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, IonModal, IonContent, IonInput, IonTextarea, IonButton } from '@ionic/vue';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
@@ -137,6 +137,26 @@ async function submitForm() {
     imagePreview.value = '';
   } catch (error) {
     alert('เกิดข้อผิดพลาด: ' + error);
+  }
+}
+
+onMounted(loadData);
+
+async function loadData() {
+  try {
+    const response = await fetch('http://capa.kimhun55.com/get', {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const result = await response.json();
+    // result = { status: true, data: [...] }
+    if (result.status && Array.isArray(result.data)) {
+      items.value = result.data;
+    } else {
+      alert('ข้อมูลที่ได้ไม่ถูกต้อง');
+    }
+  } catch (error) {
+    alert('เกิดข้อผิดพลาดขณะโหลดข้อมูล: ' + error);
   }
 }
 </script>
