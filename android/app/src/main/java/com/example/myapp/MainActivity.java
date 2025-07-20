@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.kimhun55.ionic;
 
 import com.getcapacitor.BridgeActivity;
 

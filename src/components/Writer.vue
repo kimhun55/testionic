@@ -54,7 +54,15 @@ import { IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, IonModal, Io
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-const items = ref([]);
+interface WriterItem {
+  id?: string;
+  title: string;
+  content: string;
+  image: string;
+  created_at?: string;
+}
+
+const items = ref<WriterItem[]>([]);
 const showForm = ref(false);
 const formTitle = ref('');
 const formContent = ref('');
@@ -124,14 +132,12 @@ async function submitForm() {
     formdata.append('image', imageFile.value, imageFile.value.name);
   }
   try {
-    const response = await fetch('http://capa.kimhun55.com/add', {
+    await fetch('https://capa.kimhun55.com/add', {
       method: 'POST',
       body: formdata,
       redirect: 'follow'
     });
-    const result = await response.text();
-    alert('บันทึกสำเร็จ: ');
-    // เพิ่ม demo item
+    alert('บันทึกสำเร็จ');
     items.value.push({ title: formTitle.value, content: formContent.value, image: imagePreview.value || 'https://placekitten.com/120/120' });
     showForm.value = false;
     formTitle.value = '';
@@ -148,7 +154,7 @@ onMounted(loadData);
 async function loadData() {
   loading.value = true;
   try {
-    const response = await fetch('http://capa.kimhun55.com/get', {
+    const response = await fetch('https://capa.kimhun55.com/get', {
       method: 'GET',
       redirect: 'follow'
     });
