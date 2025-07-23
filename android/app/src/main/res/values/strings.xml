@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">myionic</string>
-    <string name="title_activity_main">myionic</string>
+    <string name="app_name">TestIonic</string>
+    <string name="title_activity_main">TestIonic</string>
     <string name="package_name">com.kimhun55.ionic</string>
     <string name="custom_url_scheme">com.kimhun55.ionic</string>
 </resources>
