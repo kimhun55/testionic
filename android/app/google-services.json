@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "651004615091",
+    "project_id": "ionic-bffbd",
+    "storage_bucket": "ionic-bffbd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:651004615091:android:591348c8c03d00847fd3c6",
+        "android_client_info": {
+          "package_name": "com.kimhun55.ionic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5HFXxX_cEOMOC4mXhXFaaudFGAfv8i_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
