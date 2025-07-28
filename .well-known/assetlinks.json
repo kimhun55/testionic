@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "myionic",
+      "package_name": "com.kimhun55.ionic",
+      "sha256_cert_fingerprints": ["46:1B:97:06:39:0C:F0:FA:CF:3E:AB:EA:54:3D:1C:89:78:99:93:AB:4A:DB:4B:D6:DA:EC:F4:11:26:46:CB:D7"]
+    }
+  }
+]

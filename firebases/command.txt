@@ -1,0 +1,1 @@
+ keytool -list -v -keystore .\upload-keystore.jks -alias upload -storepass CardApp2025! -keypass CardApp2025! | findstr SHA256

@@ -2,14 +2,13 @@
 
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
-import { IonApp, IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
-import TodoList from './components/TodoList.vue';
-import Writer from './components/Writer.vue';
+import { onMounted } from 'vue';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
+import { useRouter } from 'vue-router';
 
-
+const router = useRouter();
 
 // Firebase Web Push (เฉพาะ web)
 let messaging: any = null;
@@ -22,9 +21,6 @@ const firebaseConfig = {
   appId: "1:651004615091:web:caebdea76aa4769a7fd3c6",
   measurementId: "G-KCP03ZF3QW"
 };
-
-const page = ref('home');
-function goTo(p: string) { page.value = p; }
 
 onMounted(() => {
   console.log('App mounted');
@@ -112,41 +108,96 @@ onMounted(() => {
       });
     });
   }
+
+
+  // Deep Link handler (Universal/App Links)
+  App.addListener('appUrlOpen', (data: any) => {
+    // data.url คือ url ที่เปิดแอป เช่น myapp://some/path หรือ https://your.domain/path
+    if (data && data.url) {
+      try {
+        const url = new URL(data.url);
+        alert('Deep link URL: ' + url.pathname);
+        //url.pathname แสดงเป็น alert box ขึ้นมาที่หน้าจอ
+        if (url.pathname) {
+          router.push(url.pathname);
+        }
+      } catch (e) {
+        console.warn('Invalid deeplink url:', data.url);
+      }
+    }
+  }
+);
+
+
+//end mounted
 });
 </script>
 
 <template>
-  <ion-app>
+  <ion-menu content-id="main-content">
     <ion-header>
-      <ion-toolbar color="primary">
+      <ion-toolbar color="warning">
+        <ion-title>Menu Content</ion-title>
+      </ion-toolbar>
+      <ion-list>
+         <ion-item button @click="$router.push('/')" style="--background: #fff7e6;">
+          <ion-label style="color: #ff8800;">home</ion-label>
+        </ion-item>
+        <ion-item button @click="$router.push('/todo')" style="--background: #fff7e6;">
+          <ion-label style="color: #ff8800;">Todo</ion-label>
+        </ion-item>
+        <ion-item button @click="$router.push('/writer')" style="--background: #fff7e6;">
+          <ion-label style="color: #ff8800;">Writer</ion-label>
+        </ion-item>
+        <ion-item button @click="$router.push('/user')" style="--background: #fff7e6;">
+          <ion-label style="color: #ff8800;">User</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-header>
+    <ion-content class="ion-padding" style="--background: #fff7e6; color: #ff8800;">
+      This is the menu content.
+    </ion-content>
+  </ion-menu>
+  <ion-page id="main-content">
+    <ion-header>
+      <ion-toolbar color="warning">
         <ion-buttons slot="start">
-          <ion-button @click="goTo('home')">
-        <ion-icon name="home-outline"></ion-icon>
-          </ion-button>
+          <ion-menu-button></ion-menu-button>
         </ion-buttons>
-        <ion-title>Test app</ion-title>
+        <ion-title>
+          {{
+            $route.path === '/todo' ? 'todolist'
+            : $route.path === '/writer' ? 'writer'
+            : $route.path === '/user' ? 'ผู้ใช้งาน'
+            : $route.path === '/' ? 'home'
+            : 'Menu'
+          }}
+        </ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content>
-      <div v-if="page === 'home'" style="padding: 2em; text-align: center;">
-        <ion-button expand="block" color="secondary" @click="goTo('todo')">
-          <ion-icon slot="start" name="list-outline"></ion-icon>
-          Todo List local
-        </ion-button>
-        <ion-button expand="block" color="tertiary" @click="goTo('writer')">
-          <ion-icon slot="start" name="create-outline"></ion-icon>
-          Writer
-        </ion-button>
-      </div>
-      <div v-else-if="page === 'todo'">
-        <TodoList />
-      </div>
-      <div v-else-if="page === 'writer'">
-        <Writer />
-      </div>
+    <ion-content class="ion-padding" style="--background: #fff7e6;">
+      <router-view />
     </ion-content>
-  </ion-app>
+  </ion-page>
 </template>
+
+<script lang="ts">
+  import { IonButtons, IonContent, IonHeader, IonMenu, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+  import { defineComponent } from 'vue';
+
+  export default defineComponent({
+    components: {
+      IonButtons,
+      IonContent,
+      IonHeader,
+      IonMenu,
+      IonMenuButton,
+      IonPage,
+      IonTitle,
+      IonToolbar,
+    },
+  });
+</script>
 
 <style scoped>
 .logo {

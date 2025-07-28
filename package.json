@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:for": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",
+    "@capacitor/app": "^7.0.1",
     "@capacitor/camera": "^7.0.1",
     "@capacitor/cli": "^7.4.2",
     "@capacitor/core": "^7.4.2",
